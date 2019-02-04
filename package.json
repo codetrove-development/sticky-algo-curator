@@ -1,0 +1,48 @@
+{
+  "name": "snappy-algo",
+  "version": "1.0.8-alpha",
+  "description": "Original algorithm for snappy-grid",
+  "main": "index.js",
+  "unpkg": "dist/snappy-algo.min.js",
+  "scripts": {
+    "build-dev": "webpack --mode development",
+    "build-prod": "webpack --mode production"
+  },
+  "author": "Code Trove Limited",
+  "license": "Code Trove Product License",
+  "package-name": "git+ssh://git@github.com:codetrove-development/snappy-algo<repo>.git",
+  "dependencies": {
+    "snappy-grid-core": "^1.0.11-alpha"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.1.2",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
+    "@babel/preset-env": "^7.1.0",
+    "babel-loader": "^8.0.4",
+    "uglifyjs-webpack-plugin": "^2.1.1",
+    "webpack": "4.19.1",
+    "webpack-cli": "^2.1.4",
+    "webpack-merge": "^4.2.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com/codetrove-development/snappy-algo"
+  },
+  "bugs": {
+    "url": "https://github.com/codetrove-development/snappy-algo/issues"
+  },
+  "homepage": "https://github.com/codetrove-development/snappy-algo",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "keywords": [
+    "snappy",
+    "snappy-grid",
+    "grid"
+  ],
+  "files": [
+    "dist",
+    "src",
+    "build"
+  ]
+}
