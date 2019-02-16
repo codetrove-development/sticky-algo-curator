@@ -1,43 +1,44 @@
 {
-  "name": "snappy-algo",
-  "version": "1.0.8-alpha",
-  "description": "Original algorithm for snappy-grid",
+  "name": "sticky-algo-curator",
+  "version": "1.0.1-alpha",
+  "description": "Original algorithm for curator",
   "main": "index.js",
-  "unpkg": "dist/snappy-algo.min.js",
+  "unpkg": "dist/sticky-algo.min.js",
   "scripts": {
     "build-dev": "webpack --mode development",
     "build-prod": "webpack --mode production"
   },
   "author": "Code Trove Limited",
   "license": "Code Trove Product License",
-  "package-name": "git+ssh://git@github.com:codetrove-development/snappy-algo<repo>.git",
+  "package-name": "git+ssh://git@github.com:codetrove-development/sticky-algo<repo>.git",
   "dependencies": {
-    "snappy-grid-core": "^1.0.11-alpha"
+    "curator-core": "^1.0.2-alpha"
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",
     "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
     "@babel/preset-env": "^7.1.0",
     "babel-loader": "^8.0.4",
-    "uglifyjs-webpack-plugin": "^2.1.1",
+    "terser-webpack-plugin": "^1.2.2",
     "webpack": "4.19.1",
     "webpack-cli": "^2.1.4",
     "webpack-merge": "^4.2.1"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com/codetrove-development/snappy-algo"
+    "url": "git@github.com/codetrove-development/sticky-algo"
   },
   "bugs": {
-    "url": "https://github.com/codetrove-development/snappy-algo/issues"
+    "url": "https://github.com/codetrove-development/sticky-algo/issues"
   },
-  "homepage": "https://github.com/codetrove-development/snappy-algo",
+  "homepage": "https://github.com/codetrove-development/sticky-algo",
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
   },
   "keywords": [
-    "snappy",
-    "snappy-grid",
+    "algo",
+    "algorithm",
+    "curator",
     "grid"
   ],
   "files": [

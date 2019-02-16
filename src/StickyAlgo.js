@@ -1,6 +1,6 @@
-import SnapperCore, { helpers as helpers } from 'snappy-grid-core'
+import SnapperCore, { helpers } from 'curator-core'
 
-export default class SnapAlgo {
+export default class StickyAlgo {
     getItemInitialData( itemProps ) {
         return {
             previousX: itemProps.x,
@@ -119,8 +119,41 @@ export default class SnapAlgo {
             return this.revertInYDirection( movedItem, previousX, previousY, grid, gridOptions )
         }
         else {
-
+            return this.revertInXDirection( movedItem, previousX, previousY, grid, gridOptions )
         }
+    }
+
+    revertInXDirection( movedItem, previousX, previousY, grid, gridOptions ) {
+        const { gridRows, gridColumns } = gridOptions
+        const yLimit = previousY + movedItem.height
+        const revertedItems = []
+
+        for ( let x = previousX + movedItem.width; x < gridColumns; x++ ) {
+            for ( let y = previousY; y < yLimit; y++ ) {
+                const item = grid[ y ][ x ]
+
+                if ( !helpers.isDefined( item ))
+                    continue
+
+                if (this._getCloserPosition( item, item.algoData.previousX, item.algoData.previousY, grid, gridOptions )) {
+                    const { x, y } = item
+                    item.x = item.newX
+                    item.y = item.newY
+                    SnapperCore.updateGridWithItemMovement( grid, item, x, y, item.width, item.height )
+                    revertedItems.push( item )
+                }
+
+                if ( item.height + item.y >= yLimit ) {
+                    y = yLimit
+                    x = item.x + item.width - 1
+                }
+                else {
+                    y = item.y + item.height
+                }
+            }
+        }
+
+        return revertedItems
     }
 
     revertInYDirection( movedItem, previousX, previousY, grid, gridOptions ) {

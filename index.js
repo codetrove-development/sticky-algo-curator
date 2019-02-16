@@ -1,2 +1,2 @@
 
-module.exports = require('./build/snappy-algo').default
+module.exports = require('./build/sticky-algo').default

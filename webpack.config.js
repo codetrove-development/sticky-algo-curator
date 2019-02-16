@@ -1,10 +1,10 @@
 const merge = require('webpack-merge')
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const TerserPlugin = require('terser-webpack-plugin')
 
 const baseConfig = {
   context: __dirname,
   entry: {
-    SnappyAlgo: './src/SnappyAlgo'
+    StickyAlgo: './src/StickyAlgo'
   },
   module: {
     rules: [
@@ -23,32 +23,28 @@ const devConfig = merge( baseConfig, {
   devtool: 'source-map',
   output: {
     path: __dirname + "/build",
-    filename: "snappy-algo.js",
+    filename: "sticky-algo.js",
     libraryTarget: "umd",
-    library: "SnappyAlgo"
+    library: "StickyAlgo"
   }
 })
 
 const prodConfig = merge( baseConfig, {
   optimization: {
     minimizer: [
-      new UglifyJsPlugin({
-        cache: true,
+      new TerserPlugin({
         parallel: true,
-        uglifyOptions: {
-          compress: true,
-          ecma: 5,
-          mangle: true
+        terserOptions: {
+          ecma: 6,
         },
-        sourceMap: false
-      })
+      }),
     ]
   },
   output: {
     path: __dirname + "/dist",
-    filename: "snappy-algo.min.js",
+    filename: "sticky-algo.min.js",
     libraryTarget: "umd",
-    library: "SnappyAlgo"
+    library: "StickyAlgo"
   }
 })
 
