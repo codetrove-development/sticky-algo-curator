@@ -10,238 +10,192 @@ export default class StickyAlgo {
         }
     }
 
-    updatedItem( item, newX, newY, newWidth, newHeight ) {
-        item.x = newX
-        item.y = newY
-        item.width = newWidth
-        item.height = newHeight
-        item.newX = newX
-        item.newY = newY
-        item.newWidth = newWidth
-        item.newHeight = newHeight
-    }
-
-    onGridItemRemoved( item, grid, gridOptions ) {
-        const { previousX, previousY } = item.algoData
-        const revertedItems = this.revertPreviousMovements( item, previousX, previousY, grid, gridOptions )
-
-        return revertedItems
-    }
-
     run ( state, itemProps, newX, newY, newWidth, newHeight ) {
         const { grid, gridOptions, items } = state
-        const { gridColumns, gridRows } = gridOptions
         const item = {
             ...itemProps,
         }
         const allItems = {}
-        state.items.forEach(i => allItems[ i.id ] = i)
+        items.forEach(i => allItems[ i.id ] = i)
 
-        // get any collisions for this movement
-        const collisions = this.getCollisions( allItems, grid, newX, newY, newWidth, newHeight, [ itemProps.id ] )
+        this._setOptions( state )
 
-        // hitting a glued element stops any movement possibility
-        if ( this.hasHitGluedElement( collisions ) )
+        const result = this.placeItem( this._grid, allItems, item, newX, newY, newWidth, newHeight )
+
+        if ( result == null ) {
             return { success: false }
+        }
 
-        // get a copy of the item
-        this.updatedItem( item, newX, newY, newWidth, newHeight )
-
-        // ok, this item can go where it wants. update the grid
-        SnapperCore.updateGridWithItemMovement( grid, item, itemProps.x, itemProps.y, itemProps.width, itemProps.height )
-
-        // remove any previously registered movements resulting from collisions
-        this.setPreviousMovements( item, true )
-
-        // set the resize directions as according to the users supplied options
-        this._canResizeX = gridOptions.itemsCanResizeGrid && gridOptions.resizeGridDirections !== 'y'
-        this._canResizeY = gridOptions.itemsCanResizeGrid && gridOptions.resizeGridDirections !== 'x'
-
-        // run the algo
-        const { itemsToMove, maxRows, maxCols } = this.getMoveDetails( allItems, grid, item, newX, newY, newWidth, newHeight, collisions)
- 
-        const updatedItems = {}
-        // for each updated item, update the grid and add it to the list of updated items
-        itemsToMove.forEach( itm => {
+        const updateItems = {}
+        result.forEach( itm => {
             const i = allItems[ itm.id ]
             const clone = { ...i }
 
-            this.updatedItem( clone, itm.newX, itm.newY, itm.width, itm.height )
-            SnapperCore.updateGridWithItemMovement(grid, clone, i.x, i.y, i.width, i.height)
-            
-            updatedItems[ i.id ] = clone
+            this._updateItem( clone, itm.newX, itm.newY, itm.newWidth, itm.newHeight )
+            SnapperCore.updateGridWithItemMovement( this._grid, clone, i.x, i.y, i.width, i.height)
+            this._registerItemMovement( itm.newX, itm.newY, itm.newWidth, itm.newHeight )
+            updateItems[ i.id ] = clone
         })
 
-        // add the currently moved item to the update list
-        updatedItems[ item.id ] = item
+        // remove any previously registered movements resulting from collisions
+        this.setPreviousMovements( updateItems[ item.id ] )
 
-        // try to move any items back to where they were if possible
-        const revertedItems = this.revertPreviousMovements( item, itemProps.x, itemProps.y, grid, gridOptions, items, collisions )
-
-        // add all reverted items to the update list
-        revertedItems.forEach( i => {
-            const { x, y } = i
-
-            updatedItems[ i.id ] = {
-                ...allItems[ i.id ],
-                x,
-                y,
-            }
+        const revertedItems = this.revertPreviousMovements( {
+            ...allItems,
+            ...updateItems
+        } )
+        
+        revertedItems.forEach( itm => {
+            updateItems[ itm.id ] = itm
+            this._registerItemMovement( itm.x, itm.y, itm.width, itm.height )
         })
 
+        this.printGrid()
+     
         return {
             success: true,
-            itemsToMove: updatedItems,
-            collisionCount: collisions.length,
-            items,
-            gridRows: Math.max( maxRows, gridOptions.gridRows, newY + newHeight ),
-            gridColumns: Math.max( maxCols, gridOptions.gridColumns, newX + newWidth ),
-            item
+            itemsToMove: updateItems,
+            gridRows: this._gridRows,
+            gridColumns: this._gridColumns,
         }
+    }
+
+    onGridItemRemoved( state, itemProps ) {
+        const allItems = {}
+
+        this._setOptions( state )
+
+        state.items.forEach(i => allItems[ i.id ] = i)
+
+        const revertedItems = this.revertPreviousMovements( allItems )
+
+        return revertedItems
+    }
+
+    printGrid() {
+        console.clear()
+
+        for( let y = 0; y < this._grid.length; y++) {
+            const row = this._grid[ y ]
+
+            if (!row) {
+                console.log( ' ' )
+                continue
+            }
+
+            let line = ''
+            
+            for( let x = 0; x < row.length; x++) {
+                line += row[ x ] ? ( row[ x ].id ).toString().padEnd( 3 ) : '   '
+            }
+
+            console.log( line )
+        }
+    }
+
+    placeItem( grid, allitems, item, x, y, width, height ) {
+        const collisions = this._getCollisions( allitems, grid, x, y, width, height, [ item.id ] )
+        const lowestGluedEl = this._findLargestGluedElement( collisions )
+
+        if ( lowestGluedEl != null )
+            return this.placeItem( grid, allitems, item, x, lowestGluedEl.y + lowestGluedEl.height, width, height )
+
+        item.newX = x
+        item.newY = y
+        item.newWidth = width
+        item.newHeight = height
+        
+        let movedItems = [ item ]
+
+        collisions.forEach( col => {
+            // expects current settings of always having a resize direciton
+            const newX = this._canResizeX && !this._canResizeY 
+                ? col.x + width 
+                : col.x
+
+            const newY = this._canResizeY
+                ? Math.max( col.y, y ) + height
+                : col.y
+
+            const result = this.placeItem( grid, allitems, col, newX, newY, col.width, col.height )
+
+            if ( result == null )
+                return null
+
+            movedItems = movedItems.concat( result )
+        })
+
+        return movedItems
     }
 
     addItemToGrid( grid, gridOptions, gridSizing, items, itemProps ) {
-        const result = this.run( grid, gridOptions, gridSizing, items, itemProps, itemProps.x, itemProps.y, itemProps.width, itemProps.height  )
+        const allItems = [
+            ...items,
+            itemProps
+        ]
+
+        const result = this.run( grid, gridOptions, gridSizing, allItems, itemProps, itemProps.x, itemProps.y, itemProps.width, itemProps.height  )
         return result
     }
 
-    setPreviousMovements( item, force ) {
-        if ( force || ( item.algoData.previousX === item.x && item.algoData.previousY === item.y )) {
-            item.algoData.previousX = item.x
-            item.algoData.previousY = item.y
-        }
+    setPreviousMovements( item ) {
+        item.algoData.previousX = item.x
+        item.algoData.previousY = item.y
     }
 
-    revertPreviousMovements( movedItem, previousX, previousY, grid, gridOptions ) {
-        const { resizeGridDirections } = gridOptions
+    revertPreviousMovements( allItems ) {
+        const itemsOfInterest = Object.keys( allItems )
+            .map( key => allItems[ key ] )
+            .filter( i => i.x !== i.algoData.previousX || i.y !== i.algoData.previousY )
+            .sort((i1, i2) => i1.y - i2.y || i1.x - i2.x)
 
-        if ( resizeGridDirections === 'y' ) {
-            return this.revertInYDirection( movedItem, previousX, previousY, grid, gridOptions )
-        }
-        else {
-            return this.revertInXDirection( movedItem, previousX, previousY, grid, gridOptions )
-        }
-    }
-
-    revertInXDirection( movedItem, previousX, previousY, grid, gridOptions ) {
-        const { gridRows, gridColumns } = gridOptions
-        const yLimit = previousY + movedItem.height
         const revertedItems = []
 
-        for ( let x = previousX + movedItem.width; x < gridColumns; x++ ) {
-            for ( let y = previousY; y < yLimit; y++ ) {
-                const item = grid[ y ][ x ]
-
-                if ( !helpers.isDefined( item ))
-                    continue
-
-                if (this._getCloserPosition( item, item.algoData.previousX, item.algoData.previousY, grid, gridOptions )) {
-                    const { x, y } = item
-                    item.x = item.newX
-                    item.y = item.newY
-                    SnapperCore.updateGridWithItemMovement( grid, item, x, y, item.width, item.height )
-                    revertedItems.push( item )
-                }
-
-                if ( item.height + item.y >= yLimit ) {
-                    y = yLimit
-                    x = item.x + item.width - 1
-                }
-                else {
-                    y = item.y + item.height
-                }
-            }
-        }
-
-        return revertedItems
-    }
-
-    revertInYDirection( movedItem, previousX, previousY, grid, gridOptions ) {
-        const { gridRows, gridColumns } = gridOptions
-        const xLimit = previousX + movedItem.width
-        const revertedItems = []
-
-        for ( let y = previousY + movedItem.height; y < gridRows; y++ ) {
-            if ( !grid[ y ] )
-                return revertedItems
-
-            for ( let x = previousX; x < xLimit; x++ ) {
-                const item = grid[ y ][ x ]
-
-                if ( !helpers.isDefined( item ))
-                    continue
-
-                if (this._getCloserPosition( item, item.algoData.previousX, item.algoData.previousY, grid, gridOptions )) {
-                    const { x, y } = item
-                    item.x = item.newX
-                    item.y = item.newY
-                    SnapperCore.updateGridWithItemMovement( grid, item, x, y, item.width, item.height )
-                    revertedItems.push( item )
-                }
-
-                if ( item.width + item.x >= xLimit ) {
-                    x = xLimit
-                    y = item.y + item.height - 1
-                }
-                else {
-                    x = item.x + item.width
-                }
-            }
-        }
-
-        return revertedItems
-    }
-
-    revertPreviousMovementsOld( movedItem, grid, gridOptions, items, collisions ) {
-        //let collisionCount = collisions.length
-        let movedIds = []
-        let revertedItems = []
-
-        // if the user does not want sticky elements, then
-        // ignore this request 
-        if (!gridOptions.stickyElements)
-            return
-
-        // sort by x first then y. may need to change this to 
-        // see what direction the dragged item is moving in
-        const previousMovements = items
-            .filter( ( item ) => {
-                return ( item.algoData.previousX != item.x || item.algoData.previousY != item.y )
-                    && item.id !== movedItem.id
-            } )
-            .sort((m1, m2) => {
-                const xDiff = m1.x - m2.x
-
-                if (xDiff !== 0)
-                    return xDiff
-
-                return m1.y - m2.y
-            })
-
-        for (let i = 0; i < previousMovements.length; i++) {
-            const item = previousMovements[i]
+        itemsOfInterest.forEach(item => {
             const { previousX, previousY } = item.algoData
 
-            if (this._getCloserPosition( item, previousX, previousY, grid, gridOptions )) {
+            if ( this._getCloserPosition( item, previousX, previousY ) ) {
                 const { x, y } = item
-                item.x = item.newX
-                item.y = item.newY
-                SnapperCore.updateGridWithItemMovement( grid, item, x, y, item.width, item.height )
-                revertedItems[ item.id ] = item
-
-                if (previousX === item.x && previousY === item.y) {
-                    movedIds.push(item._id);
-                }
+                this._updateItem( item, item.newX, item.newY, item.width, item.height )
+                SnapperCore.updateGridWithItemMovement( this._grid, item, x, y, item.width, item.height)
+                revertedItems.push( item )
             }
-        }
+        })
 
-        return {
-            revertedItems,
-            //unmovedCollisions: collisions,
+        return revertedItems
+    }
+
+    _setOptions( state ) {
+        const { gridOptions, grid } = state
+
+        this._gridOptions = gridOptions
+        this._canResizeX = gridOptions.itemsCanResizeGrid && gridOptions.resizeGridDirections !== 'y'
+        this._canResizeY = gridOptions.itemsCanResizeGrid && gridOptions.resizeGridDirections !== 'x'
+
+        this._gridRows = gridOptions.gridRows
+        this._gridColumns = gridOptions.gridColumns
+
+        this._grid = grid
+    }
+
+    _updateItem( item, newX, newY, newWidth, newHeight ) {
+        item.x = newX
+        item.y = newY
+        item.width = newWidth
+        item.height = newHeight
+    }
+
+    _registerItemMovement( x, y, width, height ) {
+        if ( this._canResizeY ) {
+            this._gridRows = Math.max( this._gridRows, y + height )
+        }
+        
+        if ( this._canResizeX ) {
+            this._gridColumns = Math.max( this._gridColumns, x + width )
         }
     }
 
-    _getCloserPosition( item, x, y, grid, gridOptions ) {
+    _getCloserPosition( item, x, y ) {
         const diffY = item.y - y
         const diffX = item.x - x
 
@@ -251,10 +205,10 @@ export default class StickyAlgo {
         let newY = y
 
         if (diffX + diffY === 0)
-            return false;
+            return false
 
-        while (true) {
-            if (this.canFit( newX, newY, item.width, item.height, item.id, grid, gridOptions )) {
+        while ( true ) {
+            if ( this._canFit( newX, newY, item.width, item.height, item.id ) ) {
                 item.newX = newX;
                 item.newY = newY;
                 return true;
@@ -274,74 +228,65 @@ export default class StickyAlgo {
                 yIterator = 0
 
             if ( xIterator + yIterator === 0)
-                return false;
-
-            else if (newX > gridOptions.gridColumns || newX < 0 || newY > gridOptions.gridRows || newY < 0)
-                return false;
+                return false
         }
     }
 
-    canFit( x, y, width, height, id, grid, gridOptions ) {
-        const {
-            gridColumns,
-            gridRows
-        } = gridOptions
+    _canFit( x, y, width, height, id ) {
+        const { gridColumns, gridRows } = this._gridOptions
 
-        if ( x + width > gridColumns 
-            || x < 0
-            || y + height > gridRows 
-            || y < 0
+        if ( ( x + width > gridColumns && !this._canResizeX ) 
+            || ( x < 0 )
+            || ( y + height > gridRows && !this._canResizeY )
+            || ( y < 0 )
         )
-            return false;
+            return false
 
         for ( let j = y; j < y + height; j++ ) {
-            const block = grid[j];
+            const block = this._grid[ j ]
 
-            if ( !helpers.isDefined( block ) ) {
-                grid[j] = [];
-                continue;
+            if ( !block ) {
+                this._grid[ j ] = []
+                continue
             }
 
             for ( let i = x; i < x + width; i++ ) {
-                if ( helpers.isDefined( block[i] ) && block[i].id != id)
-                    return false;
+                if ( block[ i ] && block[ i ].id != id)
+                    return false
             }
         }
 
-        return true;
+        return true
     }
 
-    hasHitGluedElement(items) {
-        return this.findGluedElement( items ) != null;
-    }
-   
-    findGluedElement( items ) {
-        return items.find( item => item.glued )
-    }
-
-    findLargestGluedElement(items) {
+    _findLargestGluedElement(items) {
         const gluedElements = items.filter( i => i.glued )
         const gluedItemsCount = gluedElements.length
 
         if ( gluedItemsCount === 0 )
-            return null;
+            return null
 
-        let largestEl = gluedElements[0];
+        let largestEl = gluedElements[ 0 ]
 
-        for ( let i = 1; i < gluedItemsCount; i++) {
-            const iteratedItem = gluedElements[i];
+        for ( let i = 1; i < gluedItemsCount; i++ ) {
+            const iteratedItem = gluedElements[ i ]
 
-            if ( this._canResizeX )
-                largestEl = largestEl.width + largestEl.x > iteratedItem.width + iteratedItem.x ? largestEl : iteratedItem;
-
-            else
-                largestEl = largestEl.height + largestEl.y > iteratedItem.height + iteratedItem.y ? largestEl : iteratedItem;
+            if ( this._canResizeX ) {
+                largestEl = largestEl.width + largestEl.x > iteratedItem.width + iteratedItem.x 
+                    ? largestEl 
+                    : iteratedItem
+            }
+            else {
+                largestEl = largestEl.height + largestEl.y > iteratedItem.height + iteratedItem.y 
+                    ? largestEl 
+                    : iteratedItem
+            }
         }
 
         return largestEl;
     }
 
-    getCollisions( allItems, grid, newX, newY, width, height, whitelistIds ) {
+    _getCollisions( allItems, grid, newX, newY, width, height, whitelistIds ) {
         const yLimit = newY + height
         const xLimit = newX + width
 
@@ -351,15 +296,13 @@ export default class StickyAlgo {
             grid[ y ] = grid[ y ] || [];
 
             for ( let x = newX; x < xLimit; x++ ) {
-                const cell = grid[ y ][ x ]
+                const gridItem = grid[ y ][ x ]
 
-                if ( !cell )
+                if ( !gridItem )
                     continue
 
-                const gridItem = allItems[ cell.id ]
-
-                if (gridItem.visible && whitelistIds.indexOf( gridItem.id ) == -1 && !helpers.objIsInArray(collisions, gridItem, 'id'))
-                    collisions.push( gridItem );
+                if ( whitelistIds.indexOf( gridItem.id ) == -1 && gridItem.visible && !helpers.objIsInArray( collisions, gridItem, 'id' ) )
+                    collisions.push( gridItem )
 
                 const correctedX = gridItem.x + gridItem.width - 1
 
@@ -371,118 +314,5 @@ export default class StickyAlgo {
         }
 
         return collisions;
-    }
-
-    getMoveDetails( allItems, grid, draggedItem, newX, newY, newWidth, newHeight, collisions) {
-        let itemsToMove = {}
-        let maxRows = 0
-        let maxCols = 0
-
-        this.handleCollisions( newX, newY, newWidth, newHeight, collisions );
-
-        while (collisions.length > 0) {
-            let newCollisions = []
-
-            for (var i = 0; i < collisions.length; i++) {
-                const currentCollision = collisions[i];
-
-                // todo change this to 
-                // 1. a) check if it's in the previous movements array and could move back 
-                //    b) get next free spot - jump over glued items ( x dir if xresizeable, else ydir if yresizeable, else nearest if +ve y/x)
-                // 3. get collisions, add to the new collisions array
-                // 4. update maxRows, maxCols
-                // 5. return success = false if hit boundary and unable to get out
-
-                const nextCollisions = this.getNextGluedFreeCollisions( allItems, grid, draggedItem, currentCollision);
-                this.handleCollisions( currentCollision.newX, currentCollision.newY, currentCollision.width, currentCollision.height, nextCollisions );
-
-                newCollisions = newCollisions.concat(nextCollisions);
-                itemsToMove[currentCollision.id] = currentCollision;
-
-                const rowsRequired = currentCollision.newY + currentCollision.height
-                const columnsRequired = currentCollision.newX + currentCollision.width
-
-                if ( rowsRequired > maxRows )
-                    maxRows = rowsRequired
-
-                if ( columnsRequired > maxCols )
-                    maxCols = columnsRequired
-            }
-
-            collisions = newCollisions;
-        }
-
-        return { 
-            itemsToMove: Object.keys(itemsToMove).map(key => itemsToMove[ key ]),
-            maxRows, 
-            maxCols 
-        }
-    }
-
-    getNextGluedFreeCollisions(allItems, grid, draggedItem, currentCollision) {
-        var nextCollisions,
-            gluedElement = {},
-            movingXDir = this._canResizeX;
-
-        while (gluedElement != null) {
-            nextCollisions = this.getCollisions(
-                allItems,
-                grid,
-                currentCollision.newX,
-                currentCollision.newY,
-                currentCollision.width,
-                currentCollision.height,
-                [ draggedItem.id, currentCollision.id ]);
-
-            gluedElement = this.findLargestGluedElement(nextCollisions);
-
-            if (gluedElement != null) {
-                if (movingXDir)
-                    currentCollision.newX = gluedElement.x + gluedElement.width;
-
-                else
-                    currentCollision.newY = gluedElement.y + gluedElement.height;
-            }
-        }
-
-        return nextCollisions;
-    }
-
-    handleCollisions( newX, newY, newWidth, newHeight, collisions ) {
-        var yOffset = 0,
-            xOffset = 0,
-            limit,
-            i,
-            collision,
-            minY = Number.MAX_SAFE_INTEGER,
-            minX = Number.MAX_SAFE_INTEGER;
-
-        if (collisions.length === 0)
-            return;
-        
-        if (this._canResizeX) {
-            for (i = 0, limit = collisions.length; i < limit; i++) {
-                collision = collisions[i];
-                minX = Math.min(minX, collision.x);
-            }
-
-            xOffset = Math.max(0, newX - minX) + newWidth - Math.max(0, minX - newX);
-        }
-        else {
-            for (i = 0, limit = collisions.length; i < limit; i++) {
-                collision = collisions[i];
-                minY = Math.min(minY, collision.y);
-            }
-
-            yOffset = Math.max(0, newY - minY) + newHeight - Math.max(0, minY - newY);
-        }
-
-        for (i = 0, limit = collisions.length; i < limit; i++) {
-            collision = collisions[i]
-            collision.newX = collision.x + xOffset
-            collision.newY = collision.y + yOffset
-
-            this.setPreviousMovements( collision, false )
-        }
     }
 }
