@@ -167,13 +167,14 @@ export default class StickyAlgo {
 
     _setOptions( state ) {
         const { gridOptions, grid } = state
+        const { itemsCanResizeGrid, resizeGridDirections, gridRows, gridColumns } = gridOptions
 
         this._gridOptions = gridOptions
-        this._canResizeX = gridOptions.itemsCanResizeGrid && gridOptions.resizeGridDirections !== 'y'
-        this._canResizeY = gridOptions.itemsCanResizeGrid && gridOptions.resizeGridDirections !== 'x'
+        this._canResizeX = itemsCanResizeGrid && resizeGridDirections !== 'y'
+        this._canResizeY = itemsCanResizeGrid && resizeGridDirections !== 'x'
 
-        this._gridRows = gridOptions.gridRows
-        this._gridColumns = gridOptions.gridColumns
+        this._gridRows = gridRows
+        this._gridColumns = gridColumns
 
         this._grid = grid
     }
