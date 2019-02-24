@@ -25,7 +25,8 @@ const devConfig = merge( baseConfig, {
     path: __dirname + "/build",
     filename: "sticky-algo.js",
     libraryTarget: "umd",
-    library: "StickyAlgo"
+    library: "StickyAlgo",
+    globalObject: "typeof self !== 'undefined' ? self : this"
   }
 })
 
@@ -44,7 +45,8 @@ const prodConfig = merge( baseConfig, {
     path: __dirname + "/dist",
     filename: "sticky-algo.min.js",
     libraryTarget: "umd",
-    library: "StickyAlgo"
+    library: "StickyAlgo",
+    globalObject: "typeof self !== 'undefined' ? self : this"
   }
 })
 

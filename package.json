@@ -1,6 +1,6 @@
 {
   "name": "sticky-algo-curator",
-  "version": "1.0.1-alpha",
+  "version": "1.0.3-beta",
   "description": "Original algorithm for curator",
   "main": "index.js",
   "unpkg": "dist/sticky-algo.min.js",
@@ -12,7 +12,7 @@
   "license": "Code Trove Product License",
   "package-name": "git+ssh://git@github.com:codetrove-development/sticky-algo<repo>.git",
   "dependencies": {
-    "curator-core": "^1.0.2-alpha"
+    "curator-core": "^1.0.6-beta"
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",

@@ -7,7 +7,7 @@
 		exports["StickyAlgo"] = factory();
 	else
 		root["StickyAlgo"] = factory();
-})(window, function() {
+})(typeof self !== 'undefined' ? self : this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -107,7 +107,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	if(true)
 		module.exports = factory();
 	else {}
-})(window, function() {
+})(typeof self !== 'undefined' ? self : this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -215,14 +215,6 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
 // Snapper core is responsible for handling all logic for interacting with the grid
 // except:
 // 1. direct ui manipulation (responsibility of the wrapper)
@@ -237,25 +229,10 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
       position: 'absolute'
     };
   },
-  getItemClasses: function getItemClasses() {
-    var itemOptions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _options__WEBPACK_IMPORTED_MODULE_1__["defaultItemOptions"];
-
-    var classes = _toConsumableArray(itemOptions.classes).concat([itemOptions.itemClassName]);
-
-    if (itemOptions.glued) {
-      classes.push('snapper-glued');
-    }
-
-    return classes;
-  },
   getEmptyGrid: function getEmptyGrid(gridRows) {
-    var grid = [];
-
-    for (var r = 0; r < gridRows; r++) {
-      grid.push([]);
-    }
-
-    return grid;
+    return Array.from(Array(gridRows), function (_) {
+      return [];
+    });
   },
   /// 
   /// Calculate the position of the item within the grid
@@ -272,24 +249,10 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     }
   },
   getItemPositionPercentages: function getItemPositionPercentages(gridWidth, gridHeight, gridRows, gridCols, width, height, left, top) {
-    var pxPerColFloored = Math.floor(gridWidth / gridCols);
-    var pxPerRowFloored = Math.floor(gridHeight / gridRows);
-    var colRemainderPx = gridWidth - pxPerColFloored * gridCols;
-    var rowRemainderPx = gridHeight - pxPerRowFloored * gridRows; // todo check if need to * by required precision and floor to avoid decimal calc
-
-    var widthPxOffset = 49 / gridWidth / 100;
-    var heightPxOffset = 49 / gridHeight / 100;
-    var extraLeft = Math.min(left, colRemainderPx);
-    var extraWidth = Math.min(width + left, colRemainderPx) - extraLeft;
-    var extraTop = Math.min(top, rowRemainderPx);
-    var extraHeight = Math.min(height + top, rowRemainderPx) - extraTop; // shift it by 2/5 px percent to always count for rounding errors
-    // could do anything below 1/2 but this is sufficient as 
-    // (40 / x = 0.01% limit => pxLimit = 40 / 0.01 = 4000px
-
-    var leftPct = (left * pxPerColFloored + extraLeft) * 100 / gridWidth + widthPxOffset;
-    var widthPct = (width * pxPerColFloored + extraWidth) * 100 / gridWidth + widthPxOffset;
-    var topPct = (top * pxPerRowFloored + extraTop) * 100 / gridHeight + heightPxOffset;
-    var heightPct = (height * pxPerRowFloored + extraHeight) * 100 / gridHeight + heightPxOffset;
+    var leftPct = left / gridCols * 100;
+    var topPct = top / gridRows * 100;
+    var widthPct = width / gridCols * 100;
+    var heightPct = height / gridRows * 100;
     var ending = '%';
     return {
       leftPct: leftPct,
@@ -300,18 +263,10 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     };
   },
   getItemPositionPixels: function getItemPositionPixels(gridWidth, gridHeight, gridRows, gridCols, width, height, left, top) {
-    var pxPerColFloored = Math.floor(gridWidth / gridCols);
-    var pxPerRowFloored = Math.floor(gridHeight / gridRows);
-    var colRemainderPx = gridWidth - pxPerColFloored * gridCols;
-    var rowRemainderPx = gridHeight - pxPerRowFloored * gridRows;
-    var extraLeft = Math.min(left, colRemainderPx);
-    var extraWidth = Math.min(width + left, colRemainderPx) - extraLeft;
-    var extraTop = Math.min(top, rowRemainderPx);
-    var extraHeight = Math.min(height + top, rowRemainderPx) - extraTop;
-    var widthPx = pxPerColFloored * width + extraWidth;
-    var heightPx = pxPerRowFloored * height + extraHeight;
-    var topPx = pxPerRowFloored * top + extraTop;
-    var leftPx = pxPerColFloored * left + extraLeft;
+    var widthPx = gridWidth / gridCols * width;
+    var heightPx = gridHeight / gridRows * height;
+    var topPx = gridHeight / gridRows * top;
+    var leftPx = gridWidth / gridCols * left;
     var ending = 'px';
     return {
       widthPx: widthPx,
@@ -326,8 +281,8 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
         newY = item.newY,
         newWidth = item.newWidth,
         newHeight = item.newHeight;
-    var gridWidth = gridSizing.gridWidth,
-        gridHeight = gridSizing.gridHeight,
+    var widthPx = gridSizing.widthPx,
+        heightPx = gridSizing.heightPx,
         gridRows = gridSizing.gridRows,
         gridColumns = gridSizing.gridColumns;
     var renderMode = gridOptions.renderMode;
@@ -335,6 +290,7 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     var movedItem = _objectSpread({}, item);
 
     if (!(newWidth && newHeight)) {
+      // todo
       console.error("Item ".concat(key, " does not have a newWidth or newHeight value. Unable to correctly resize item"));
       return item;
     } // update the values with the set new values
@@ -349,12 +305,6 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     movedItem.position = _objectSpread({}, position);
     movedItem.styles = _objectSpread({}, styles);
     return movedItem;
-  },
-  updateGridWithMovedItems: function updateGridWithMovedItems(grid, items) {
-    for (var _key in items) {
-      var movedItem = items[_key];
-      this.updateGridWithItemMovement(grid, movedItem, movedItem.x, movedItem.y, movedItem.width, movedItem.height);
-    }
   },
   getUpdatedMovedItems: function getUpdatedMovedItems(items, draggedItemId, newTopPx, newLeftPx, newWidthPx, newHeightPx, gridSizing, gridOptions) {
     var _this = this;
@@ -385,15 +335,15 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     var _this2 = this;
 
     var ignoreIds = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
-    var renderMode = gridOptions.renderMode;
-    var gridRows = gridSizing.gridRows,
-        gridColumns = gridSizing.gridColumns,
-        gridHeight = gridSizing.gridHeight,
-        gridWidth = gridSizing.gridWidth;
+    var gridRows = gridOptions.gridRows,
+        gridColumns = gridOptions.gridColumns,
+        renderMode = gridOptions.renderMode;
+    var heightPx = gridSizing.heightPx,
+        widthPx = gridSizing.widthPx;
     return items.map(function (item) {
       if (ignoreIds.indexOf(item.id) > -1) return;
 
-      var position = _this2.getItemPosition(gridWidth, gridHeight, gridRows, gridColumns, item.width, item.height, item.x, item.y, renderMode);
+      var position = _this2.getItemPosition(widthPx, heightPx, gridRows, gridColumns, item.width, item.height, item.x, item.y, renderMode);
 
       var styles = _this2.getItemPositionStyles(gridOptions, item.styles, position);
 
@@ -404,22 +354,22 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     });
   },
   getGridBoundaries: function getGridBoundaries(gridSizing) {
-    var gridWidth = gridSizing.gridWidth,
-        gridHeight = gridSizing.gridHeight;
+    var widthPx = gridSizing.widthPx,
+        heightPx = gridSizing.heightPx;
     return {
       leftBoundary: 0,
-      rightBoundary: gridWidth,
+      rightBoundary: widthPx,
       topBoundary: 0,
-      bottomBoundary: gridHeight
+      bottomBoundary: heightPx
     };
   },
   getItemSizing: function getItemSizing(itemProps, gridSizing) {
-    var gridWidth = gridSizing.gridWidth,
-        gridHeight = gridSizing.gridHeight;
+    var widthPx = gridSizing.widthPx,
+        heightPx = gridSizing.heightPx;
     var width = itemProps.width,
         height = itemProps.height;
-    var pxPerColumn = gridWidth / gridColumns;
-    var pxPerRow = gridHeight / gridRows;
+    var pxPerColumn = widthPx / gridColumns;
+    var pxPerRow = heightPx / gridRows;
     var itemWidthPx = width * pxPerColumn;
     var itemHeightPx = height * pxPerRow;
     return {
@@ -533,11 +483,15 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
         gridOptions = state.gridOptions;
     var pxPerColumn = gridSizing.widthPx / gridOptions.gridColumns;
     var pxPerRow = gridSizing.heightPx / gridOptions.gridRows;
+    var newWidthPx = pxPerColumn * itemProps.width;
+    var newHeightPx = pxPerRow * itemProps.height;
+    var newLeftPx = pxPerColumn * itemProps.x;
+    var newTopPx = pxPerRow * itemProps.y;
     return {
-      newWidthPx: Math.round(pxPerColumn * itemProps.width),
-      newHeightPx: Math.round(pxPerRow * itemProps.height),
-      newLeftPx: Math.round(pxPerColumn * itemProps.x),
-      newTopPx: Math.round(pxPerRow * itemProps.y),
+      newWidthPx: newWidthPx,
+      newHeightPx: newHeightPx,
+      newLeftPx: newLeftPx,
+      newTopPx: newTopPx,
       newX: itemProps.x,
       newY: itemProps.y,
       newWidth: itemProps.width,
@@ -548,11 +502,10 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     var targetItem = _objectSpread({}, itemProps, {
       position: _objectSpread({}, itemProps.position, {
         ending: 'px',
-        topPx: movementChange.newTopPx,
-        // todo this is wrong
-        leftPx: movementChange.newLeftPx,
-        widthPx: movementChange.newWidthPx,
-        heightPx: movementChange.newHeightPx
+        topPx: Math.max(0, movementChange.newTopPx),
+        leftPx: Math.max(0, movementChange.newLeftPx),
+        widthPx: Math.max(0, movementChange.newWidthPx),
+        heightPx: Math.max(0, movementChange.newHeightPx)
       })
     });
 
@@ -582,8 +535,10 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
   },
   checkProposedGridSizing: function checkProposedGridSizing(state, proposedGridColumns, proposedGridRows) {
     var gridOptions = state.gridOptions;
-    var canResizeX = gridOptions.resizeGridDirections !== _options__WEBPACK_IMPORTED_MODULE_1__["resizeOptions"].y;
-    var canResizeY = gridOptions.resizeGridDirections !== _options__WEBPACK_IMPORTED_MODULE_1__["resizeOptions"].x;
+    var itemsCanResizeGrid = gridOptions.itemsCanResizeGrid,
+        resizeGridDirections = gridOptions.resizeGridDirections;
+    var canResizeX = itemsCanResizeGrid && resizeGridDirections !== _options__WEBPACK_IMPORTED_MODULE_1__["resizeOptions"].y;
+    var canResizeY = itemsCanResizeGrid && resizeGridDirections !== _options__WEBPACK_IMPORTED_MODULE_1__["resizeOptions"].x;
     if (!canResizeX && proposedGridColumns !== gridOptions.gridColumns || gridOptions.gridColumns < 1) throw 'Invalid grid column proposition from algorithm';else if (!canResizeY && proposedGridRows !== gridOptions.gridRows || gridOptions.gridRows < 1) throw 'Invalid grid row proposition from algorithm';
   },
   getPlaceholderStyles: function getPlaceholderStyles(position) {
@@ -618,7 +573,7 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
         newHeight = movementChange.newHeight;
     var canResizeX = itemsCanResizeGrid && resizeGridDirections !== 'y';
     var canResizeY = itemsCanResizeGrid && resizeGridDirections !== 'x';
-    return (canResizeX || newX + newWidth <= gridColumns) && (canResizeY || newY + newHeight <= gridRows);
+    return (canResizeX || newX + newWidth <= gridColumns) && (canResizeY || newY + newHeight <= gridRows) && newX >= 0 && newY >= 0 && newWidth > 0 && newHeight > 0;
   },
   onItemMovement: function onItemMovement(itemProps, state, movementChange) {
     var _this3 = this;
@@ -652,11 +607,14 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
     var updatedItems = Object.keys(dragResult.itemsToMove).map(function (key) {
       var movedItem = dragResult.itemsToMove[key];
+      var _movedItem$meta = movedItem.meta,
+          isDragging = _movedItem$meta.isDragging,
+          isResizing = _movedItem$meta.isResizing;
 
       var position = _this3.getItemPosition(gridWidth, gridHeight, dragResult.gridRows, dragResult.gridColumns, movedItem.width, movedItem.height, movedItem.x, movedItem.y, renderMode); // without these the item will jitter
 
 
-      if (movedItem.id === draggedItem.id) {
+      if (movedItem.id === draggedItem.id && (isDragging || isResizing)) {
         var placeholderStyles = _this3.getPlaceholderStyles(position);
 
         movedItem.meta = _objectSpread({}, movedItem.meta, {
@@ -664,13 +622,13 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
         });
         movedItem.position = _objectSpread({}, movedItem.position, {
           ending: 'px',
+          // movedItem.meta.isDragging || movedItem.meta.isResizing ? 'px' : '%',
           topPx: movementChange.newTopPx,
           leftPx: movementChange.newLeftPx,
           widthPx: movementChange.newWidthPx,
           heightPx: movementChange.newHeightPx
         });
         movedItem.styles = _this3.getItemPositionStyles(gridOptions, movedItem.styles, movedItem.position);
-        console.log(movedItem.styles);
       } else {
         movedItem.position = position;
         movedItem.styles = _this3.getItemPositionStyles(gridOptions, movedItem.styles, position);
@@ -847,9 +805,13 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
         height = itemProps.height;
     this.setGridWithValue(grid, id, x, y, width, height, itemProps, true);
   },
-  removeGridItem: function removeGridItem(gridItems, grid, itemProps, gridOptions, gridSizing) {
+  removeGridItem: function removeGridItem(state, itemProps) {
     var _this4 = this;
 
+    var grid = state.grid,
+        items = state.items,
+        gridOptions = state.gridOptions,
+        gridSizing = state.gridSizing;
     var id = itemProps.id,
         x = itemProps.x,
         y = itemProps.y,
@@ -861,8 +823,8 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     this.ensureGridHasRow(grid, y);
     this.setGridWithValue(grid, id, x, y, width, height, undefined, true); // todo handle grid resize
 
-    var itemsReverted = gridOptions.algo.onGridItemRemoved(itemProps, grid, gridOptions);
-    var updatedItems = gridItems.map(function (item) {
+    var itemsReverted = gridOptions.algo.onGridItemRemoved(state, itemProps);
+    var updatedItems = items.map(function (item) {
       var revertDetails = itemsReverted.find(function (i) {
         return i.id === item.id;
       });
@@ -940,8 +902,8 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
   /// Gets the internal grid x,y equivalent for the supplied top & left px values
   ///
   getGridXY: function getGridXY(gridSizing, topPx, leftPx) {
-    var gridWidth = gridSizing.gridWidth,
-        gridHeight = gridSizing.gridHeight,
+    var widthPx = gridSizing.widthPx,
+        heightPx = gridSizing.heightPx,
         gridRows = gridSizing.gridRows,
         gridColumns = gridSizing.gridColumns;
     var x = this.getGridPosition(gridWidth, leftPx, gridColumns);
@@ -1044,11 +1006,10 @@ var defaultItemOptions = {
   y: 0,
   width: 1,
   height: 1,
-  classes: [],
+  className: 'grid-item',
   glued: false,
   // not yet supported but is partially done in the algo, do not alter
   visible: true,
-  canResize: true,
   displayResize: true,
   position: {
     topPx: 0,
@@ -1062,7 +1023,8 @@ var defaultItemOptions = {
     ending: 'px'
   },
   meta: {
-    isDragging: false
+    isDragging: false,
+    isResizing: false
   }
 };
 var defaultPlaceholderStyles = {
@@ -1075,9 +1037,7 @@ var defaultGridOptions = {
   gridRows: 12,
   width: '100%',
   height: '100%',
-  itemClassName: 'grid-item',
-  // any extra classes to add to the element
-  classes: [],
+  className: 'curator-grid',
   // whether to render the grid items using percentages or pixel values
   renderMode: renderModeType.flex,
   // when a dragged element pushes others out of the way, they may return to their 
@@ -1098,9 +1058,9 @@ var defaultGridOptions = {
   // On all transitions completed for a given element
   onAllTransitionsComplete: function onAllTransitionsComplete(element, details, eventIfFired) {},
   // class name for the resize handle
-  resizeClassName: 'snap-resize-handle',
+  resizeClassName: 'resize-handle',
   enableCSS3: true,
-  algorithm: null
+  algo: null
 };
 
 
@@ -1123,7 +1083,7 @@ var defaultGridOptions = {
 	if(true)
 		module.exports = factory();
 	else {}
-})(window, function() {
+})(typeof self !== 'undefined' ? self : this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -1256,7 +1216,7 @@ var objIsInArray = function objIsInArray(array, obj, key) {
 	if(true)
 		module.exports = factory();
 	else {}
-})(window, function() {
+})(typeof self !== 'undefined' ? self : this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -1380,11 +1340,10 @@ var defaultItemOptions = {
   y: 0,
   width: 1,
   height: 1,
-  classes: [],
+  className: 'grid-item',
   glued: false,
   // not yet supported but is partially done in the algo, do not alter
   visible: true,
-  canResize: true,
   displayResize: true,
   position: {
     topPx: 0,
@@ -1398,7 +1357,8 @@ var defaultItemOptions = {
     ending: 'px'
   },
   meta: {
-    isDragging: false
+    isDragging: false,
+    isResizing: false
   }
 };
 var defaultPlaceholderStyles = {
@@ -1411,9 +1371,7 @@ var defaultGridOptions = {
   gridRows: 12,
   width: '100%',
   height: '100%',
-  itemClassName: 'grid-item',
-  // any extra classes to add to the element
-  classes: [],
+  className: 'curator-grid',
   // whether to render the grid items using percentages or pixel values
   renderMode: renderModeType.flex,
   // when a dragged element pushes others out of the way, they may return to their 
@@ -1434,9 +1392,9 @@ var defaultGridOptions = {
   // On all transitions completed for a given element
   onAllTransitionsComplete: function onAllTransitionsComplete(element, details, eventIfFired) {},
   // class name for the resize handle
-  resizeClassName: 'snap-resize-handle',
+  resizeClassName: 'resize-handle',
   enableCSS3: true,
-  algorithm: null
+  algo: null
 };
 
 
@@ -1479,6 +1437,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return StickyAlgo; });
 /* harmony import */ var curator_core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! curator-core */ "./node_modules/curator-core/index.js");
 /* harmony import */ var curator_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(curator_core__WEBPACK_IMPORTED_MODULE_0__);
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
@@ -1509,27 +1475,6 @@ function () {
       };
     }
   }, {
-    key: "updatedItem",
-    value: function updatedItem(item, newX, newY, newWidth, newHeight) {
-      item.x = newX;
-      item.y = newY;
-      item.width = newWidth;
-      item.height = newHeight;
-      item.newX = newX;
-      item.newY = newY;
-      item.newWidth = newWidth;
-      item.newHeight = newHeight;
-    }
-  }, {
-    key: "onGridItemRemoved",
-    value: function onGridItemRemoved(item, grid, gridOptions) {
-      var _item$algoData = item.algoData,
-          previousX = _item$algoData.previousX,
-          previousY = _item$algoData.previousY;
-      var revertedItems = this.revertPreviousMovements(item, previousX, previousY, grid, gridOptions);
-      return revertedItems;
-    }
-  }, {
     key: "run",
     value: function run(state, itemProps, newX, newY, newWidth, newHeight) {
       var _this = this;
@@ -1537,176 +1482,198 @@ function () {
       var grid = state.grid,
           gridOptions = state.gridOptions,
           items = state.items;
-      var gridColumns = gridOptions.gridColumns,
-          gridRows = gridOptions.gridRows;
 
       var item = _objectSpread({}, itemProps);
 
       var allItems = {};
-      state.items.forEach(function (i) {
+      items.forEach(function (i) {
         return allItems[i.id] = i;
-      }); // get any collisions for this movement
+      });
 
-      var collisions = this.getCollisions(allItems, grid, newX, newY, newWidth, newHeight, [itemProps.id]); // hitting a glued element stops any movement possibility
+      this._setOptions(state);
 
-      if (this.hasHitGluedElement(collisions)) return {
-        success: false // get a copy of the item
+      var result = this.placeItem(this._grid, allItems, item, newX, newY, newWidth, newHeight);
 
-      };
-      this.updatedItem(item, newX, newY, newWidth, newHeight); // ok, this item can go where it wants. update the grid
+      if (result == null) {
+        return {
+          success: false
+        };
+      }
 
-      curator_core__WEBPACK_IMPORTED_MODULE_0___default.a.updateGridWithItemMovement(grid, item, itemProps.x, itemProps.y, itemProps.width, itemProps.height); // remove any previously registered movements resulting from collisions
-
-      this.setPreviousMovements(item, true); // set the resize directions as according to the users supplied options
-
-      this._canResizeX = gridOptions.itemsCanResizeGrid && gridOptions.resizeGridDirections !== 'y';
-      this._canResizeY = gridOptions.itemsCanResizeGrid && gridOptions.resizeGridDirections !== 'x'; // run the algo
-
-      var _this$getMoveDetails = this.getMoveDetails(allItems, grid, item, newX, newY, newWidth, newHeight, collisions),
-          itemsToMove = _this$getMoveDetails.itemsToMove,
-          maxRows = _this$getMoveDetails.maxRows,
-          maxCols = _this$getMoveDetails.maxCols;
-
-      var updatedItems = {}; // for each updated item, update the grid and add it to the list of updated items
-
-      itemsToMove.forEach(function (itm) {
+      var updateItems = {};
+      result.forEach(function (itm) {
         var i = allItems[itm.id];
 
         var clone = _objectSpread({}, i);
 
-        _this.updatedItem(clone, itm.newX, itm.newY, itm.width, itm.height);
+        _this._updateItem(clone, itm.newX, itm.newY, itm.newWidth, itm.newHeight);
 
-        curator_core__WEBPACK_IMPORTED_MODULE_0___default.a.updateGridWithItemMovement(grid, clone, i.x, i.y, i.width, i.height);
-        updatedItems[i.id] = clone;
-      }); // add the currently moved item to the update list
+        curator_core__WEBPACK_IMPORTED_MODULE_0___default.a.updateGridWithItemMovement(_this._grid, clone, i.x, i.y, i.width, i.height);
 
-      updatedItems[item.id] = item; // try to move any items back to where they were if possible
+        _this._registerItemMovement(itm.newX, itm.newY, itm.newWidth, itm.newHeight);
 
-      var revertedItems = this.revertPreviousMovements(item, itemProps.x, itemProps.y, grid, gridOptions, items, collisions); // add all reverted items to the update list
+        updateItems[i.id] = clone;
+      }); // remove any previously registered movements resulting from collisions
 
-      revertedItems.forEach(function (i) {
-        var x = i.x,
-            y = i.y;
-        updatedItems[i.id] = _objectSpread({}, allItems[i.id], {
-          x: x,
-          y: y
-        });
+      this.setPreviousMovements(updateItems[item.id]);
+      var revertedItems = this.revertPreviousMovements(_objectSpread({}, allItems, updateItems));
+      revertedItems.forEach(function (itm) {
+        updateItems[itm.id] = itm;
+
+        _this._registerItemMovement(itm.x, itm.y, itm.width, itm.height);
       });
+      this.printGrid();
       return {
         success: true,
-        itemsToMove: updatedItems,
-        collisionCount: collisions.length,
-        items: items,
-        gridRows: Math.max(maxRows, gridOptions.gridRows, newY + newHeight),
-        gridColumns: Math.max(maxCols, gridOptions.gridColumns, newX + newWidth),
-        item: item
+        itemsToMove: updateItems,
+        gridRows: this._gridRows,
+        gridColumns: this._gridColumns
       };
+    }
+  }, {
+    key: "onGridItemRemoved",
+    value: function onGridItemRemoved(state, itemProps) {
+      var allItems = {};
+
+      this._setOptions(state);
+
+      state.items.forEach(function (i) {
+        return allItems[i.id] = i;
+      });
+      var revertedItems = this.revertPreviousMovements(allItems);
+      return revertedItems;
+    }
+  }, {
+    key: "printGrid",
+    value: function printGrid() {
+      if (!window.DEBUG_ALGO) return;
+      console.clear();
+
+      for (var y = 0; y < this._grid.length; y++) {
+        var row = this._grid[y];
+
+        if (!row) {
+          console.log(' ');
+          continue;
+        }
+
+        var line = '';
+
+        for (var x = 0; x < row.length; x++) {
+          line += row[x] ? row[x].id.toString().padEnd(3) : '   ';
+        }
+
+        console.log(line);
+      }
+    }
+  }, {
+    key: "placeItem",
+    value: function placeItem(grid, allitems, item, x, y, width, height) {
+      var _this2 = this;
+
+      var collisions = this._getCollisions(allitems, grid, x, y, width, height, [item.id]);
+
+      var lowestGluedEl = this._findLargestGluedElement(collisions);
+
+      if (lowestGluedEl != null) return this.placeItem(grid, allitems, item, x, lowestGluedEl.y + lowestGluedEl.height, width, height);
+      item.newX = x;
+      item.newY = y;
+      item.newWidth = width;
+      item.newHeight = height;
+      var movedItems = [item];
+      collisions.forEach(function (col) {
+        // expects current settings of always having a resize direciton
+        var newX = _this2._canResizeX && !_this2._canResizeY ? col.x + width : col.x;
+        var newY = _this2._canResizeY ? Math.max(col.y, y) + height : col.y;
+
+        var result = _this2.placeItem(grid, allitems, col, newX, newY, col.width, col.height);
+
+        if (result == null) return null;
+        movedItems = movedItems.concat(result);
+      });
+      return movedItems;
     }
   }, {
     key: "addItemToGrid",
     value: function addItemToGrid(grid, gridOptions, gridSizing, items, itemProps) {
-      var result = this.run(grid, gridOptions, gridSizing, items, itemProps, itemProps.x, itemProps.y, itemProps.width, itemProps.height);
+      var allItems = [].concat(_toConsumableArray(items), [itemProps]);
+      var result = this.run(grid, gridOptions, gridSizing, allItems, itemProps, itemProps.x, itemProps.y, itemProps.width, itemProps.height);
       return result;
     }
   }, {
     key: "setPreviousMovements",
-    value: function setPreviousMovements(item, force) {
-      if (force || item.algoData.previousX === item.x && item.algoData.previousY === item.y) {
-        item.algoData.previousX = item.x;
-        item.algoData.previousY = item.y;
-      }
+    value: function setPreviousMovements(item) {
+      item.algoData.previousX = item.x;
+      item.algoData.previousY = item.y;
     }
   }, {
     key: "revertPreviousMovements",
-    value: function revertPreviousMovements(movedItem, previousX, previousY, grid, gridOptions) {
-      var resizeGridDirections = gridOptions.resizeGridDirections;
+    value: function revertPreviousMovements(allItems) {
+      var _this3 = this;
 
-      if (resizeGridDirections === 'y') {
-        return this.revertInYDirection(movedItem, previousX, previousY, grid, gridOptions);
-      } else {}
-    }
-  }, {
-    key: "revertInYDirection",
-    value: function revertInYDirection(movedItem, previousX, previousY, grid, gridOptions) {
-      var gridRows = gridOptions.gridRows,
-          gridColumns = gridOptions.gridColumns;
-      var xLimit = previousX + movedItem.width;
+      var itemsOfInterest = Object.keys(allItems).map(function (key) {
+        return allItems[key];
+      }).filter(function (i) {
+        return i.x !== i.algoData.previousX || i.y !== i.algoData.previousY;
+      }).sort(function (i1, i2) {
+        return i1.y - i2.y || i1.x - i2.x;
+      });
       var revertedItems = [];
+      itemsOfInterest.forEach(function (item) {
+        var _item$algoData = item.algoData,
+            previousX = _item$algoData.previousX,
+            previousY = _item$algoData.previousY;
 
-      for (var y = previousY + movedItem.height; y < gridRows; y++) {
-        if (!grid[y]) return revertedItems;
+        if (_this3._getCloserPosition(item, previousX, previousY)) {
+          var x = item.x,
+              y = item.y;
 
-        for (var x = previousX; x < xLimit; x++) {
-          var item = grid[y][x];
-          if (!curator_core__WEBPACK_IMPORTED_MODULE_0__["helpers"].isDefined(item)) continue;
+          _this3._updateItem(item, item.newX, item.newY, item.width, item.height);
 
-          if (this._getCloserPosition(item, item.algoData.previousX, item.algoData.previousY, grid, gridOptions)) {
-            var _x = item.x,
-                _y = item.y;
-            item.x = item.newX;
-            item.y = item.newY;
-            curator_core__WEBPACK_IMPORTED_MODULE_0___default.a.updateGridWithItemMovement(grid, item, _x, _y, item.width, item.height);
-            revertedItems.push(item);
-          }
-
-          if (item.width + item.x >= xLimit) {
-            x = xLimit;
-            y = item.y + item.height - 1;
-          } else {
-            x = item.x + item.width;
-          }
+          curator_core__WEBPACK_IMPORTED_MODULE_0___default.a.updateGridWithItemMovement(_this3._grid, item, x, y, item.width, item.height);
+          revertedItems.push(item);
         }
-      }
-
+      });
       return revertedItems;
     }
   }, {
-    key: "revertPreviousMovementsOld",
-    value: function revertPreviousMovementsOld(movedItem, grid, gridOptions, items, collisions) {
-      //let collisionCount = collisions.length
-      var movedIds = [];
-      var revertedItems = []; // if the user does not want sticky elements, then
-      // ignore this request 
-
-      if (!gridOptions.stickyElements) return; // sort by x first then y. may need to change this to 
-      // see what direction the dragged item is moving in
-
-      var previousMovements = items.filter(function (item) {
-        return (item.algoData.previousX != item.x || item.algoData.previousY != item.y) && item.id !== movedItem.id;
-      }).sort(function (m1, m2) {
-        var xDiff = m1.x - m2.x;
-        if (xDiff !== 0) return xDiff;
-        return m1.y - m2.y;
-      });
-
-      for (var i = 0; i < previousMovements.length; i++) {
-        var item = previousMovements[i];
-        var _item$algoData2 = item.algoData,
-            previousX = _item$algoData2.previousX,
-            previousY = _item$algoData2.previousY;
-
-        if (this._getCloserPosition(item, previousX, previousY, grid, gridOptions)) {
-          var x = item.x,
-              y = item.y;
-          item.x = item.newX;
-          item.y = item.newY;
-          curator_core__WEBPACK_IMPORTED_MODULE_0___default.a.updateGridWithItemMovement(grid, item, x, y, item.width, item.height);
-          revertedItems[item.id] = item;
-
-          if (previousX === item.x && previousY === item.y) {
-            movedIds.push(item._id);
-          }
-        }
+    key: "_setOptions",
+    value: function _setOptions(state) {
+      var gridOptions = state.gridOptions,
+          grid = state.grid;
+      var itemsCanResizeGrid = gridOptions.itemsCanResizeGrid,
+          resizeGridDirections = gridOptions.resizeGridDirections,
+          gridRows = gridOptions.gridRows,
+          gridColumns = gridOptions.gridColumns;
+      this._gridOptions = gridOptions;
+      this._canResizeX = itemsCanResizeGrid && resizeGridDirections !== 'y';
+      this._canResizeY = itemsCanResizeGrid && resizeGridDirections !== 'x';
+      this._gridRows = gridRows;
+      this._gridColumns = gridColumns;
+      this._grid = grid;
+    }
+  }, {
+    key: "_updateItem",
+    value: function _updateItem(item, newX, newY, newWidth, newHeight) {
+      item.x = newX;
+      item.y = newY;
+      item.width = newWidth;
+      item.height = newHeight;
+    }
+  }, {
+    key: "_registerItemMovement",
+    value: function _registerItemMovement(x, y, width, height) {
+      if (this._canResizeY) {
+        this._gridRows = Math.max(this._gridRows, y + height);
       }
 
-      return {
-        revertedItems: revertedItems //unmovedCollisions: collisions,
-
-      };
+      if (this._canResizeX) {
+        this._gridColumns = Math.max(this._gridColumns, x + width);
+      }
     }
   }, {
     key: "_getCloserPosition",
-    value: function _getCloserPosition(item, x, y, grid, gridOptions) {
+    value: function _getCloserPosition(item, x, y) {
       var diffY = item.y - y;
       var diffX = item.x - x;
       var yIterator = Math.sign(diffY);
@@ -1716,7 +1683,7 @@ function () {
       if (diffX + diffY === 0) return false;
 
       while (true) {
-        if (this.canFit(newX, newY, item.width, item.height, item.id, grid, gridOptions)) {
+        if (this._canFit(newX, newY, item.width, item.height, item.id)) {
           item.newX = newX;
           item.newY = newY;
           return true;
@@ -1727,46 +1694,35 @@ function () {
         if (newY !== item.y) newY += yIterator;
         if (newX === item.x) xIterator = 0;
         if (newY === item.y) yIterator = 0;
-        if (xIterator + yIterator === 0) return false;else if (newX > gridOptions.gridColumns || newX < 0 || newY > gridOptions.gridRows || newY < 0) return false;
+        if (xIterator + yIterator === 0) return false;
       }
     }
   }, {
-    key: "canFit",
-    value: function canFit(x, y, width, height, id, grid, gridOptions) {
-      var gridColumns = gridOptions.gridColumns,
-          gridRows = gridOptions.gridRows;
-      if (x + width > gridColumns || x < 0 || y + height > gridRows || y < 0) return false;
+    key: "_canFit",
+    value: function _canFit(x, y, width, height, id) {
+      var _this$_gridOptions = this._gridOptions,
+          gridColumns = _this$_gridOptions.gridColumns,
+          gridRows = _this$_gridOptions.gridRows;
+      if (x + width > gridColumns && !this._canResizeX || x < 0 || y + height > gridRows && !this._canResizeY || y < 0) return false;
 
       for (var j = y; j < y + height; j++) {
-        var block = grid[j];
+        var block = this._grid[j];
 
-        if (!curator_core__WEBPACK_IMPORTED_MODULE_0__["helpers"].isDefined(block)) {
-          grid[j] = [];
+        if (!block) {
+          this._grid[j] = [];
           continue;
         }
 
         for (var i = x; i < x + width; i++) {
-          if (curator_core__WEBPACK_IMPORTED_MODULE_0__["helpers"].isDefined(block[i]) && block[i].id != id) return false;
+          if (block[i] && block[i].id != id) return false;
         }
       }
 
       return true;
     }
   }, {
-    key: "hasHitGluedElement",
-    value: function hasHitGluedElement(items) {
-      return this.findGluedElement(items) != null;
-    }
-  }, {
-    key: "findGluedElement",
-    value: function findGluedElement(items) {
-      return items.find(function (item) {
-        return item.glued;
-      });
-    }
-  }, {
-    key: "findLargestGluedElement",
-    value: function findLargestGluedElement(items) {
+    key: "_findLargestGluedElement",
+    value: function _findLargestGluedElement(items) {
       var gluedElements = items.filter(function (i) {
         return i.glued;
       });
@@ -1776,14 +1732,19 @@ function () {
 
       for (var i = 1; i < gluedItemsCount; i++) {
         var iteratedItem = gluedElements[i];
-        if (this._canResizeX) largestEl = largestEl.width + largestEl.x > iteratedItem.width + iteratedItem.x ? largestEl : iteratedItem;else largestEl = largestEl.height + largestEl.y > iteratedItem.height + iteratedItem.y ? largestEl : iteratedItem;
+
+        if (this._canResizeX) {
+          largestEl = largestEl.width + largestEl.x > iteratedItem.width + iteratedItem.x ? largestEl : iteratedItem;
+        } else {
+          largestEl = largestEl.height + largestEl.y > iteratedItem.height + iteratedItem.y ? largestEl : iteratedItem;
+        }
       }
 
       return largestEl;
     }
   }, {
-    key: "getCollisions",
-    value: function getCollisions(allItems, grid, newX, newY, width, height, whitelistIds) {
+    key: "_getCollisions",
+    value: function _getCollisions(allItems, grid, newX, newY, width, height, whitelistIds) {
       var yLimit = newY + height;
       var xLimit = newX + width;
       var collisions = [];
@@ -1792,10 +1753,9 @@ function () {
         grid[y] = grid[y] || [];
 
         for (var x = newX; x < xLimit; x++) {
-          var cell = grid[y][x];
-          if (!cell) continue;
-          var gridItem = allItems[cell.id];
-          if (gridItem.visible && whitelistIds.indexOf(gridItem.id) == -1 && !curator_core__WEBPACK_IMPORTED_MODULE_0__["helpers"].objIsInArray(collisions, gridItem, 'id')) collisions.push(gridItem);
+          var gridItem = grid[y][x];
+          if (!gridItem) continue;
+          if (whitelistIds.indexOf(gridItem.id) == -1 && gridItem.visible && !curator_core__WEBPACK_IMPORTED_MODULE_0__["helpers"].objIsInArray(collisions, gridItem, 'id')) collisions.push(gridItem);
           var correctedX = gridItem.x + gridItem.width - 1;
           if (correctedX < x) throw 'x invalid for grid item - incorrectly placed in grid';
           x = correctedX;
@@ -1803,99 +1763,6 @@ function () {
       }
 
       return collisions;
-    }
-  }, {
-    key: "getMoveDetails",
-    value: function getMoveDetails(allItems, grid, draggedItem, newX, newY, newWidth, newHeight, collisions) {
-      var itemsToMove = {};
-      var maxRows = 0;
-      var maxCols = 0;
-      this.handleCollisions(newX, newY, newWidth, newHeight, collisions);
-
-      while (collisions.length > 0) {
-        var newCollisions = [];
-
-        for (var i = 0; i < collisions.length; i++) {
-          var currentCollision = collisions[i]; // todo change this to 
-          // 1. a) check if it's in the previous movements array and could move back 
-          //    b) get next free spot - jump over glued items ( x dir if xresizeable, else ydir if yresizeable, else nearest if +ve y/x)
-          // 3. get collisions, add to the new collisions array
-          // 4. update maxRows, maxCols
-          // 5. return success = false if hit boundary and unable to get out
-
-          var nextCollisions = this.getNextGluedFreeCollisions(allItems, grid, draggedItem, currentCollision);
-          this.handleCollisions(currentCollision.newX, currentCollision.newY, currentCollision.width, currentCollision.height, nextCollisions);
-          newCollisions = newCollisions.concat(nextCollisions);
-          itemsToMove[currentCollision.id] = currentCollision;
-          var rowsRequired = currentCollision.newY + currentCollision.height;
-          var columnsRequired = currentCollision.newX + currentCollision.width;
-          if (rowsRequired > maxRows) maxRows = rowsRequired;
-          if (columnsRequired > maxCols) maxCols = columnsRequired;
-        }
-
-        collisions = newCollisions;
-      }
-
-      return {
-        itemsToMove: Object.keys(itemsToMove).map(function (key) {
-          return itemsToMove[key];
-        }),
-        maxRows: maxRows,
-        maxCols: maxCols
-      };
-    }
-  }, {
-    key: "getNextGluedFreeCollisions",
-    value: function getNextGluedFreeCollisions(allItems, grid, draggedItem, currentCollision) {
-      var nextCollisions,
-          gluedElement = {},
-          movingXDir = this._canResizeX;
-
-      while (gluedElement != null) {
-        nextCollisions = this.getCollisions(allItems, grid, currentCollision.newX, currentCollision.newY, currentCollision.width, currentCollision.height, [draggedItem.id, currentCollision.id]);
-        gluedElement = this.findLargestGluedElement(nextCollisions);
-
-        if (gluedElement != null) {
-          if (movingXDir) currentCollision.newX = gluedElement.x + gluedElement.width;else currentCollision.newY = gluedElement.y + gluedElement.height;
-        }
-      }
-
-      return nextCollisions;
-    }
-  }, {
-    key: "handleCollisions",
-    value: function handleCollisions(newX, newY, newWidth, newHeight, collisions) {
-      var yOffset = 0,
-          xOffset = 0,
-          limit,
-          i,
-          collision,
-          minY = Number.MAX_SAFE_INTEGER,
-          minX = Number.MAX_SAFE_INTEGER;
-      if (collisions.length === 0) return;
-
-      if (this._canResizeX) {
-        for (i = 0, limit = collisions.length; i < limit; i++) {
-          collision = collisions[i];
-          minX = Math.min(minX, collision.x);
-        }
-
-        xOffset = Math.max(0, newX - minX) + newWidth - Math.max(0, minX - newX);
-      } else {
-        for (i = 0, limit = collisions.length; i < limit; i++) {
-          collision = collisions[i];
-          minY = Math.min(minY, collision.y);
-        }
-
-        yOffset = Math.max(0, newY - minY) + newHeight - Math.max(0, minY - newY);
-      }
-
-      for (i = 0, limit = collisions.length; i < limit; i++) {
-        collision = collisions[i];
-        collision.newX = collision.x + xOffset;
-        collision.newY = collision.y + yOffset;
-        this.setPreviousMovements(collision, false);
-      }
     }
   }]);
 
