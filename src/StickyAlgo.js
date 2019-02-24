@@ -73,6 +73,9 @@ export default class StickyAlgo {
     }
 
     printGrid() {
+        if ( typeof window === 'object' && !window.DEBUG_ALGO )
+            return
+
         console.clear()
 
         for( let y = 0; y < this._grid.length; y++) {
