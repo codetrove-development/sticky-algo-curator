@@ -1,6 +1,6 @@
 {
   "name": "sticky-algo-curator",
-  "version": "1.0.3-beta",
+  "version": "1.0.0",
   "description": "Original algorithm for curator",
   "main": "index.js",
   "unpkg": "dist/sticky-algo.min.js",
