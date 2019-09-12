@@ -1,16 +1,16 @@
 {
   "name": "sticky-algo-curator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Original algorithm for curator",
   "main": "index.js",
-  "unpkg": "dist/sticky-algo.min.js",
+  "unpkg": "dist/sticky-algo-curator.min.js",
   "scripts": {
     "build-dev": "webpack --mode development",
     "build-prod": "webpack --mode production"
   },
   "author": "Code Trove Limited",
   "license": "Code Trove Product License",
-  "package-name": "git+ssh://git@github.com:codetrove-development/sticky-algo<repo>.git",
+  "package-name": "git+ssh://git@github.com:codetrove-development/sticky-algo-curator<repo>.git",
   "dependencies": {
     "curator-core": "^1.0.0"
   },
@@ -26,12 +26,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com/codetrove-development/sticky-algo"
+    "url": "git@github.com/codetrove-development/sticky-algo-curator"
   },
   "bugs": {
-    "url": "https://github.com/codetrove-development/sticky-algo/issues"
+    "url": "https://github.com/codetrove-development/sticky-algo-curator/issues"
   },
-  "homepage": "https://github.com/codetrove-development/sticky-algo",
+  "homepage": "https://github.com/codetrove-development/sticky-algo-curator",
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
   },
