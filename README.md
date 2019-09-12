@@ -5,4 +5,4 @@ See https://github.com/codetrove-development/curator-core for the core library
 
 Implementations:
 
-React: https://github.com/codetrove-development/curator-react
+React: https://github.com/codetrove-development/react-curator
